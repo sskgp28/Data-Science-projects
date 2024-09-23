@@ -1,0 +1,460 @@
+
+import os
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+
+os.getcwd()
+os.chdir("C://Users//sushm//Downloads")
+
+input_data = pd.read_csv('data_for_lr.csv')
+print(input_data)
+from sklearn.linear_model import LinearRegression
+lr = LinearRegression()
+
+input_data.info()
+input_data = input_data.dropna()
+
+train_input = np.array(input_data.x[0:500]).reshape(500,1)
+train_output = np.array(input_data.y[0:500]).reshape(500,1)
+
+test_input = np.array(input_data.x[500:699]).reshape(199,1)
+test_output = np.array(input_data.y[500:699]).reshape(199,1)
+
+
+lr.fit(train_input, train_output)
+test_predictions = lr.predict(test_input)
+
+plt.plot(test_input,test_predictions,"+",color="green")
+plt.plot(test_input,test_output,".",color="orange")
+plt.title("Graph")
+plt.show()
+
+from sklearn.metrics import mean_squared_error
+cost = mean_squared_error(test_output, test_predictions)
+print(cost)
+print(lr.intercept_)
+
+input_data = pd.read_csv('multiple_linear_regression.csv')
+print(input_data)
+
+x = input_data.iloc[:,:-1]
+y = input_data.iloc[:,-1:]
+print(y)
+from sklearn.model_selection import train_test_split
+
+x_train, x_test, y_train, y_test = train_test_split(x,y,train_size=0.7, random_state=43)
+
+x_train.shape
+x_test.shape
+y_train.shape
+y_test.shape
+
+mlr = LinearRegression()
+mlr.fit(x_train, y_train)
+
+pred_value = mlr.predict(x_test)
+
+mlr.intercept_
+
+cost = mean_squared_error(y_test, pred_value)
+cost
+plt.plot(x_test, pred_value, "+", color="green")
+plt.plot(x_test, y_test, ".", color="red")
+plt.title("MLR")
+plt.xlabel("Input_Value")
+plt.ylabel("Pred/Output")
+plt.show()
+
+fig, ax = plt.subplots()
+type(pred_value)
+ax.plot(x_test.iloc[:10,:1], y_test.iloc[:10],".")
+ax.plot(x_test.iloc[:10,:1], pd.DataFrame(pred_value).iloc[:10],"*")
+fig
+
+plt.scatter(pred_value, y_test - pred_value)
+plt.show()
+
+import seaborn as sns
+sns.distplot(y_test - pred_value)
+
+import statsmodels.api as sm
+x_train_c = sm.add_constant(x_train)
+
+model = sm.OLS(y_train, x_train_c)
+result = model.fit()
+
+result.summary()
+
+x_train_c1 = x_train_c.iloc[:,:-1]
+model = sm.OLS(y_train, x_train_c1)
+result = model.fit()
+result.summary()
+
+
+x_test_c = sm.add_constant(x_test.iloc[:,:-1])
+y_pred = result.predict(x_test_c)
+
+plt.plot(x_test_c,y_pred, "+",color="Indigo")
+plt.plot(x_test_c,y_test, ".",color="Yellow")
+plt.show()
+
+plr_data = pd.read_csv("Position_salaries.csv")
+x = plr_data.iloc[:,1].values.reshape(10,1)
+y = plr_data.iloc[:,-1].values.reshape(10,1)
+
+plr = LinearRegression()
+plr.fit(x, y)
+y_pred = plr.predict(x)
+plt.plot(x,y, color = "red")
+plt.plot(x,y_pred, color = "blue")
+plt.show()
+
+from sklearn.preprocessing import PolynomialFeatures
+
+poly_reg = PolynomialFeatures(degree=4)
+x_poly = poly_reg.fit_transform(x)
+
+plrf = LinearRegression()
+plrf.fit(x_poly,y)
+y_poly_pred = plrf.predict(x_poly)
+plt.plot(x,y,".", color = "red")
+plt.plot(x,y_poly_pred, color = "blue")
+plt.show()
+
+
+#########################SVR#####################33
+
+svr_input_data = pd.read_csv("insurance.csv")
+
+svr_input_data.head()
+svr_input_data.info()
+svr_input_data.describe()
+svr_input_data["age"].value_counts()
+
+Male = pd.get_dummies(svr_input_data["sex"], drop_first = True)
+
+svr_input_data = pd.concat([svr_input_data,Male],axis=1)
+
+Smoker = pd.get_dummies(svr_input_data["smoker"], drop_first = True)
+region = pd.get_dummies(svr_input_data["region"], drop_first = True)
+
+list(Smoker.values)
+
+svr_input_data = pd.concat([svr_input_data,Smoker],axis=1)
+svr_input_data = pd.concat([svr_input_data,region],axis=1)
+
+svr_input_data
+
+sns.boxplot(x="region", y="charges", data=svr_input_data, palette= "GnBu")
+sns.scatterplot(x="age", y="charges", data=svr_input_data, palette= "RdBu", hue="smoker")
+sns.countplot(x="sex", data=svr_input_data, palette= "RdBu", hue="smoker")
+sns.displot(x="age", data=svr_input_data, palette= "GnBu", hue="smoker")
+sns.scatterplot(x="bmi", y="charges", data=svr_input_data, palette= "GnBu", hue="smoker")
+
+sns.despine(left=True)
+sns.set_style('white')
+
+svr_input_data.rename(columns={"yes":"Smoker"}, inplace=True)
+svr_input_data.drop(svr_input_data.columns[-2], axis=1,inplace=True)
+svr_input_data.insert(loc = 7, column = 'Smoker', value = Smoker.values)
+svr_input_data.insert(loc = 1, column = 'Sex', value = Male.values)
+
+svr_input_data.drop(columns = ["sex","region"],inplace=True)
+svr_input_data.drop(columns = ["Sex"],inplace=True)
+svr_input_data.rename(columns={"male":"sex"}, inplace=True)
+
+
+plt.figure(figsize=(12,6))
+fig, ax = plt.subplots(nrows = 1, ncols = 2, figsize=(12,6))
+sns.scatterplot(x="bmi", y="charges", data=svr_input_data, palette= "RdBu", hue="sex", ax = ax[0])
+sns.scatterplot(x="bmi", y="charges", data=svr_input_data, palette= "RdBu", hue="Smoker", ax = ax[1])
+sns.despine(left=True)
+
+plt.figure(figsize=(16,6))
+sns.heatmap(svr_input_data.corr(),annot=True)
+
+
+x = svr_input_data.drop("charges", axis = 1)
+y = svr_input_data["charges"]
+x_train, x_test, y_train, y_test = train_test_split(x,y,train_size=0.7, random_state=43)
+
+x_test.shape
+
+from sklearn.preprocessing import StandardScaler
+scaler = StandardScaler()
+scaled_x_train = scaler.fit_transform(x_train)
+scaled_x_test = scaler.transform(x_test)
+
+from sklearn.svm import SVR
+reg = SVR()
+reg.fit(scaled_x_train, y_train)
+
+pred_y = reg.predict(scaled_x_test)
+
+mean_squared_error(y_test, pred_y)
+
+(pred_y - y_test)/pred_y
+
+from sklearn.datasets import load_diabetes
+
+df = load_diabetes()
+
+df.feature_names
+
+data = pd.DataFrame(df.data, columns= df.feature_names)
+
+data["targer"] = df.target
+
+x_train, x_test, y_train, y_test = train_test_split(data.iloc[:,:-1],data.iloc[:,-1],train_size=0.7, random_state=43)
+
+scaled_x_train = scaler.fit_transform(x_train)
+scaled_x_test = scaler.transform(x_test)
+
+from sklearn.tree import DecisionTreeRegressor
+
+dt_reg = DecisionTreeRegressor()
+dt_reg.fit(x_train, y_train)
+
+y_pred = dt_reg.predict(x_test)
+
+mean_squared_error(y_test, y_pred)
+
+
+titanic_df = pd.read_csv('titanic_data.csv')
+
+titanic_df.info()
+titanic_df.describe()
+
+plt.figure(figsize=(8,4))
+
+sns.heatmap(titanic_df[["Survived","Pclass","SibSp","Parch","Fare"]].corr(), annot=True)
+titanic_df["SibSp"].unique()
+sns.catplot(x="SibSp",y="Survived", data = titanic_df, kind="bar").set_ylabels("Suvival Probability")
+
+age_visual = sns.FacetGrid(titanic_df, col= "Survived")
+age_visual = age_visual.map(sns.distplot,"Age").set_ylabels("Survival Prob")
+
+sns.barplot(data = titanic_df, x= "Sex", y="Survived").set_ylabel("Survival Prob")
+
+titanic_df[["Sex","Survived"]].groupby("Sex").mean()
+
+sns.catplot(data = titanic_df, x= "Pclass", y="Survived", kind = "bar", hue = "Sex").set_ylabel("Survival Prob")
+titanic_df[["Pclass","Survived"]].groupby("Pclass").mean()
+
+import warnings
+warnings.filterwarnings("ignore")
+
+titanic_df["Embarked"].isnull().sum()
+
+titanic_df["Embarked"].value_counts()
+
+titanic_df["Embarked"] = titanic_df["Embarked"].fillna("S")
+
+sns.catplot("Embarked", col="Survived", data = titanic_df, kind = "count", hue = "Sex").set_ylabel("Survival Prob")
+
+import random as rd
+
+a = np.random.randint(titanic_df["Age"].mean() - titanic_df["Age"].std(), 
+               titanic_df["Age"].mean() + titanic_df["Age"].std(), 
+               titanic_df["Age"].isna().value_counts()[True])
+
+x = titanic_df["Age"].copy()
+x[np.isnan(x)] = a
+titanic_df["Age"] = x
+
+titanic_df["Embarked"] = titanic_df["Embarked"].fillna("S")
+titanic_df.head()
+titanic_df = titanic_df.drop(["PassengerId", "Cabin", "Name", "Ticket"], axis=1)
+genders = {"male":0,"female":1}
+titanic_df["Sex"] = titanic_df["Sex"].map(genders)
+ports = {"S":1,"C":2,"Q":3}
+titanic_df["Embarked"] = titanic_df["Embarked"].map(ports)
+
+x = titanic_df.drop(titanic_df.columns[[0]],axis=1)
+y = titanic_df["Survived"]
+x_train, x_test, y_train, y_test = train_test_split(x,y,train_size=0.7, random_state=43)
+
+
+from sklearn.preprocessing import StandardScaler
+scaler = StandardScaler()
+scaled_x_train = scaler.fit_transform(x_train)
+scaled_x_test = scaler.transform(x_test)
+
+from sklearn.linear_model import LogisticRegression
+from sklearn.svm import SVC
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.neighbors import KNeighborsClassifier
+
+logreg = LogisticRegression()
+svm = SVC()
+dt = DecisionTreeClassifier()
+rf = RandomForestClassifier(n_estimators=1000)
+knn = KNeighborsClassifier(5)
+
+logreg.fit(scaled_x_train, y_train)
+svm.fit(scaled_x_train, y_train)
+dt.fit(scaled_x_train, y_train)
+rf.fit(scaled_x_train, y_train)
+knn.fit(scaled_x_train, y_train)
+
+y_pred_lr = logreg.predict(scaled_x_test)
+y_pred_svm = svm.predict(scaled_x_test)
+y_pred_dt = dt.predict(scaled_x_test)
+y_pred_rf = rf.predict(scaled_x_test)
+y_pred_knn = knn.predict(scaled_x_test)
+
+from sklearn.metrics import accuracy_score
+
+print(accuracy_score(y_test, y_pred_lr),
+accuracy_score(y_test, y_pred_svm),
+accuracy_score(y_test, y_pred_dt),
+accuracy_score(y_test, y_pred_rf),
+accuracy_score(y_test, y_pred_knn))
+
+
+from sklearn.datasets import make_blobs
+
+X,y = make_blobs(n_samples = 500, n_features=2, centers=5,random_state=3)
+
+fig = plt.figure(2)
+plt.grid(True)
+plt.scatter(X[:,:1], X[:,1:],c=y)
+
+k = 5
+colors = ['green','yellow','blue','cyan','red']
+10*(2*np.random.random(X.shape[1]) - 1)
+
+clusters = {}
+
+for idx in range(k):
+    center = 10*(2*np.random.random(X.shape[1]) - 1)
+    points = []
+    cluster = {
+        'center': center,
+        'points': [],
+        'color': colors[idx]
+        }
+    
+    clusters[idx]  = cluster
+    
+clusters
+
+
+plt.scatter(X[:,:1], X[:,1:],c=y)
+
+for i in clusters:
+    center = clusters[i]['center']
+    plt.scatter(center[0], center[1], marker = '^', c = 'red')
+plt.show()
+
+
+def distance(v1,v2):
+    return np.sqrt(np.sum((v1-v2)**2))
+
+
+def assign_clusters():
+    for idx in range(X.shape[0]):
+        dist = []
+        curr_x = X[idx]
+        
+        for i in range(k):
+            dis = distance(curr_x,clusters[i]['center'])
+            dist.append(dis)
+        curr_cluster = np.argmin(dist)
+        clusters[curr_cluster]['points'].append(curr_x)
+        
+assign_clusters()
+
+def plot_clusters():
+    for i in clusters:
+        pts = np.array(clusters[i]['points'])
+        try:
+            plt.scatter(pts[:,0],pts[:,1],c=clusters[i]['color'])
+        except:
+            pass
+        
+        center = clusters[i]['center']
+        plt.scatter(center[0], center[1], c ='black', marker = '^')
+        
+plot_clusters()
+
+
+def update_cluster_centers():
+    for i in clusters:
+        if clusters[i]['points'] != []:
+            clusters[i]['center'] = np.array(clusters[i]['points']).mean(axis=0)
+            clusters[i]['points'] = []
+     
+        
+assign_clusters()
+plot_clusters()
+update_cluster_centers()
+
+from sklearn.cluster import KMeans
+
+km = KMeans(n_clusters=8)
+
+X,y = make_blobs(n_samples = 500, n_features=2, centers=8,random_state=3)
+
+km.fit(X,y)
+
+centers = km.cluster_centers_
+labels = km.labels_
+
+plt.scatter(X[:,0], X[:,1], c = labels)
+plt.scatter(centers[:,0], centers[:,1],color = 'blue', marker='>')
+
+
+
+heat_data = pd.read_csv('global_heat_index.csv')
+heat_data.head(20)
+clean1 = heat_data[heat_data.Hour < 6]
+clean2 = heat_data[heat_data.Hour > 18]
+
+heat_data.drop(clean1.index, axis = 0, inplace = True)
+heat_data.drop(clean2.index, axis = 0, inplace = True)
+
+x = heat_data.iloc[:,0:10]
+y = heat_data.iloc[:,-1]
+
+from sklearn.preprocessing import MinMaxScaler
+
+x = pd.DataFrame(MinMaxScaler().fit_transform(x))
+plt.figure(figsize=(10,10))
+sns.heatmap(heat_data.corr(), annot=True)
+
+heat_data.columns.values
+heat_data[['Solar Radiation (GHI)','Temperature']].groupby(heat_data['Month']).mean(
+    ).sort_values('Solar Radiation (GHI)', ascending= False).head(9).nlargest(7, 'Temperature')
+
+pd.merge(heat_data['Month'], heat_data['Day'], left_on='Month', right_on='Day').groupby('Month').sum()
+
+
+from sklearn.ensemble import ExtraTreesClassifier
+
+md = ExtraTreesClassifier()
+md.fit(x,y)
+
+feature_imp = pd.DataFrame(md.feature_importances_, index = heat_data.columns[:-1], columns=['Score'])
+feature_imp
+
+feature_imp.nlargest(10, 'Score').plot(kind = 'bar')
+plt.show()
+
+from sklearn.feature_selection import SelectKBest
+from sklearn.feature_selection import chi2
+
+skb = SelectKBest(score_func=chi2, k=10).fit(x,y)
+
+scores = pd.DataFrame(skb.scores_)
+columns = pd.DataFrame(heat_data.columns.values[:-1])
+
+feature_score = pd.concat([columns, scores], axis = 1)
+feature_score.columns = ['Features', 'Scores']
+
+feature_score.index = feature_score['Features']
+
+feature_score.nlargest(10, 'Scores').plot(kind = 'bar')
+plt.show()
